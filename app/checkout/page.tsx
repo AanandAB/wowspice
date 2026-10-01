@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check } from "@phosphor-icons/react";
 import { useCartStore } from "@/store/cart";
-import { useOrdersStore } from "@/store/orders";
-import { cartTotals, formatGrams, formatINR, makeOrderId, type OrderRecord } from "@/lib/commerce";
+import { cartTotals, formatGrams, formatINR } from "@/lib/commerce";
+import { placeOrder } from "@/lib/api";
 import { deliverySlots, estimateDelivery, isValidPincode } from "@/lib/delivery";
 import { paletteStyle, SPICES } from "@/data/spices";
 import { BodyTheme } from "@/components/site/body-theme";
@@ -39,13 +39,13 @@ export default function CheckoutPage() {
   const router = useRouter();
   const lines = useCartStore((state) => state.lines);
   const clear = useCartStore((state) => state.clear);
-  const placeOrder = useOrdersStore((state) => state.placeOrder);
-
   const [step, setStep] = useState(0);
   const [address, setAddress] = useState<Address>(EMPTY_ADDRESS);
   const [errors, setErrors] = useState<Partial<Record<keyof Address, string>>>({});
   const [slot, setSlot] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [placeError, setPlaceError] = useState<string | null>(null);
 
   const totals = cartTotals(lines);
 
@@ -80,27 +80,36 @@ export default function CheckoutPage() {
     return Object.keys(found).length === 0;
   };
 
-  const onPlace = () => {
-    if (!slot) return;
+  const onPlace = async () => {
+    if (!slot || !consent) return;
     setPlacing(true);
-    const order: OrderRecord = {
-      id: makeOrderId(),
-      placedAt: new Date().toISOString(),
-      lines,
-      totals,
-      address: {
-        name: address.name,
-        phone: address.phone,
-        line1: [address.line1, address.line2].filter(Boolean).join(", "),
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode,
-      },
-      deliverySlot: slot,
-    };
-    placeOrder(order);
-    clear();
-    router.push(`/order?id=${order.id}`);
+    setPlaceError(null);
+    try {
+      const { order } = await placeOrder({
+        customer: {
+          name: address.name,
+          phone: address.phone,
+          email: address.email,
+          line1: [address.line1, address.line2].filter(Boolean).join(", "),
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+        },
+        items: lines.map((line) => ({
+          slug: line.slug,
+          grams: line.grams,
+          grind: line.grindId,
+          quantity: line.quantity,
+        })),
+        deliverySlot: slot,
+        consent: true,
+      });
+      clear();
+      router.push(`/order?id=${order.id}`);
+    } catch {
+      setPlaceError("We could not place your order. Please try again.");
+      setPlacing(false);
+    }
   };
 
   if (lines.length === 0) {
@@ -334,14 +343,32 @@ export default function CheckoutPage() {
                   ))}
                 </ul>
 
-                <div className="mt-8 flex flex-wrap gap-3">
+                <label className="mt-8 flex items-start gap-3 text-[0.84rem] leading-relaxed">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 flex-none accent-[rgb(var(--ws-accent))]"
+                  />
+                  <span className="text-[rgb(var(--ws-paper)/0.72)]">
+                    I consent to wowspice using these details to process and deliver this order.
+                  </span>
+                </label>
+
+                {placeError ? (
+                  <p className="mt-3 text-[0.84rem] text-[#f08a72]" role="alert">
+                    {placeError}
+                  </p>
+                ) : null}
+
+                <div className="mt-6 flex flex-wrap gap-3">
                   <button type="button" onClick={() => setStep(1)} className="ws-btn ws-btn-ghost">
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={onPlace}
-                    disabled={placing}
+                    disabled={placing || !consent}
                     className="ws-btn ws-btn-accent"
                   >
                     {placing ? "Placing…" : `Place order · ${formatINR(totals.total)}`}
@@ -349,8 +376,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <p className="ws-meta mt-4 leading-relaxed">
-                  This is a demonstration storefront. Placing the order records it in this browser
-                  only — no payment is taken and nothing is charged or shipped.
+                  Your order is recorded and sent to the shop. No payment is taken online yet.
                 </p>
               </section>
             ) : null}

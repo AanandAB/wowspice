@@ -1,22 +1,25 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Check } from "@phosphor-icons/react";
-import { useOrder } from "@/store/orders";
+import { fetchOrder, type OrderResponse } from "@/lib/api";
 import { formatGrams, formatINR } from "@/lib/commerce";
 import { paletteStyle, SPICES } from "@/data/spices";
 import { BodyTheme } from "@/components/site/body-theme";
 
+const GRIND_LABELS: Record<string, string> = {
+  whole: "Whole",
+  ground: "Ground to order",
+};
+
 /**
- * Order confirmation, static-host edition.
+ * Order confirmation, read back from the wowspice API.
  *
- * Reads the order back from the browser-local store. The id now travels as a
- * query parameter (`/order?id=…`) rather than a path segment, because a static
- * export has no server to match arbitrary `[id]` values. There is no backend, so
- * an order placed in a different browser (or after clearing storage) genuinely
- * will not be found — the not-found state says so plainly.
+ * The id travels as a query parameter (`/order?id=…`) because the storefront is
+ * a static export with no server to match arbitrary path ids. The order itself
+ * lives in D1, so it survives the browser that placed it.
  */
 export default function OrderPage() {
   return (
@@ -36,7 +39,29 @@ export default function OrderPage() {
 function OrderContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? "";
-  const { order, hydrated } = useOrder(id);
+
+  const [state, setState] = useState<{
+    status: "loading" | "ready" | "missing";
+    order?: OrderResponse;
+  }>({ status: "loading" });
+
+  useEffect(() => {
+    if (!id) {
+      setState({ status: "missing" });
+      return;
+    }
+    let cancelled = false;
+    fetchOrder(id)
+      .then(({ order }) => {
+        if (!cancelled) setState({ status: "ready", order });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "missing" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const shell = (children: React.ReactNode) => (
     <div style={paletteStyle(SPICES[1])}>
@@ -45,7 +70,7 @@ function OrderContent() {
     </div>
   );
 
-  if (!hydrated) {
+  if (state.status === "loading") {
     return shell(
       <div>
         <div className="ws-skeleton h-8 w-56" />
@@ -54,13 +79,13 @@ function OrderContent() {
     );
   }
 
-  if (!order) {
+  if (state.status === "missing" || !state.order) {
     return shell(
       <div className="text-center">
         <h1 className="ws-display-lg">We cannot find that order</h1>
         <p className="ws-body mx-auto mt-4">
-          Orders are stored in the browser that placed them, and this one is not here. If you placed
-          it in a different browser or cleared your storage, that is the reason.
+          That order number does not match anything we have. Double-check the link, or if you just
+          placed it, it may take a moment to appear.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/collection" className="ws-btn ws-btn-ghost">
@@ -74,6 +99,7 @@ function OrderContent() {
     );
   }
 
+  const order = state.order;
   const placed = new Date(order.placedAt);
 
   return shell(
@@ -88,8 +114,8 @@ function OrderContent() {
 
       <h1 className="ws-display-lg mt-6">Order placed</h1>
       <p className="ws-body mt-4">
-        Thank you. In a real store you would now get an email with a tracking reference — this
-        demonstration build records the order in this browser only and takes no payment.
+        Thank you. Your order is recorded and the shop will confirm shortly. No payment was taken
+        online.
       </p>
 
       <dl className="ws-rule mt-9 grid grid-cols-1 gap-6 pt-7 sm:grid-cols-2">
@@ -105,10 +131,10 @@ function OrderContent() {
               minute: "2-digit",
             }),
           },
-          { term: "Delivery method", value: order.deliverySlot },
+          { term: "Delivery method", value: order.deliverySlot ?? "Standard" },
           {
             term: "Delivering to",
-            value: `${order.address.name}, ${order.address.line1}, ${order.address.city}, ${order.address.state} ${order.address.pincode}`,
+            value: `${order.customer.name}, ${order.customer.line1}, ${order.customer.city}, ${order.customer.state} ${order.customer.pincode}`,
           },
         ].map((row) => (
           <div key={row.term}>
@@ -120,26 +146,27 @@ function OrderContent() {
 
       <h2 className="ws-display-md mt-12">What you ordered</h2>
       <ul className="mt-6 divide-y divide-white/8 border-y border-white/10">
-        {order.lines.map((line) => (
-          <li key={line.key} className="flex items-center gap-4 py-4">
+        {order.items.map((line) => (
+          <li key={`${line.slug ?? line.name}-${line.grams}-${line.grind}`} className="flex items-center gap-4 py-4">
             <span
               aria-hidden
               className="h-9 w-9 flex-none rounded-full"
-              style={{
-                background: `radial-gradient(circle at 34% 30%, ${line.accent} 0%, ${line.accent}55 62%, transparent 100%)`,
-              }}
+              style={{ background: "rgb(var(--ws-accent) / 0.22)" }}
             />
             <div className="min-w-0 flex-1">
-              <Link href={`/spice/${line.slug}`} className="text-[0.9rem] font-medium hover:underline">
-                {line.name}
-              </Link>
+              {line.slug ? (
+                <Link href={`/spice/${line.slug}`} className="text-[0.9rem] font-medium hover:underline">
+                  {line.name}
+                </Link>
+              ) : (
+                <span className="text-[0.9rem] font-medium">{line.name}</span>
+              )}
               <p className="ws-meta mt-0.5">
-                {line.packLabel} · {formatGrams(line.grams)} · {line.grindLabel} × {line.quantity}
+                {line.packLabel} · {formatGrams(line.grams)} · {GRIND_LABELS[line.grind] ?? line.grind} ×{" "}
+                {line.quantity}
               </p>
             </div>
-            <span className="text-[0.9rem] tabular-nums">
-              {formatINR(line.unitPrice * line.quantity)}
-            </span>
+            <span className="text-[0.9rem] tabular-nums">{formatINR(line.lineTotal)}</span>
           </li>
         ))}
       </ul>
@@ -147,21 +174,19 @@ function OrderContent() {
       <dl className="mt-6 space-y-2 text-[0.9rem]">
         <div className="flex justify-between">
           <dt className="text-[rgb(var(--ws-paper)/0.62)]">Subtotal</dt>
-          <dd className="tabular-nums">{formatINR(order.totals.subtotal)}</dd>
+          <dd className="tabular-nums">{formatINR(order.subtotal)}</dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-[rgb(var(--ws-paper)/0.62)]">Delivery</dt>
-          <dd className="tabular-nums">
-            {order.totals.shippingIsFree ? "Free" : formatINR(order.totals.shipping)}
-          </dd>
+          <dd className="tabular-nums">{order.delivery === 0 ? "Free" : formatINR(order.delivery)}</dd>
         </div>
         <div className="flex justify-between">
           <dt className="text-[rgb(var(--ws-paper)/0.62)]">GST (provisional)</dt>
-          <dd className="tabular-nums">{formatINR(order.totals.gst)}</dd>
+          <dd className="tabular-nums">{formatINR(order.gst)}</dd>
         </div>
         <div className="flex justify-between border-t border-white/10 pt-3 text-[1.05rem] font-semibold">
           <dt>Total</dt>
-          <dd className="tabular-nums">{formatINR(order.totals.total)}</dd>
+          <dd className="tabular-nums">{formatINR(order.total)}</dd>
         </div>
       </dl>
 

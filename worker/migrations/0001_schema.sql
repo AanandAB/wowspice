@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS orders (
   total REAL NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'new',          -- new|confirmed|packed|dispatched|delivered|cancelled
   payment_status TEXT NOT NULL DEFAULT 'unpaid', -- unpaid|paid|cod
+  delivery_slot TEXT,
   consent_version TEXT,
   consented_at INTEGER,                        -- DPDP consent record
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
