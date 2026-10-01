@@ -2,6 +2,7 @@ import type { Env } from "./env";
 import { corsHeaders, error, json } from "./lib/http";
 import { listProducts } from "./routes/products";
 import { createOrder, getOrder } from "./routes/orders";
+import { adminLogin, adminOrders } from "./routes/admin";
 
 /**
  * wowspice-api — backend for the wowspice storefront + admin CMS.
@@ -32,6 +33,12 @@ export default {
       const orderMatch = url.pathname.match(/^\/api\/orders\/([^/]+)$/);
       if (orderMatch && method === "GET") {
         return await getOrder(env, decodeURIComponent(orderMatch[1]));
+      }
+      if (url.pathname === "/api/admin/login" && method === "POST") {
+        return await adminLogin(env, request);
+      }
+      if (url.pathname === "/api/admin/orders" && method === "GET") {
+        return await adminOrders(env, request);
       }
       return error("not_found", 404);
     } catch (err) {

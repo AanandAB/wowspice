@@ -3,9 +3,10 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check } from "@phosphor-icons/react";
+import { Check, WhatsappLogo } from "@phosphor-icons/react";
 import { fetchOrder, type OrderResponse } from "@/lib/api";
 import { formatGrams, formatINR } from "@/lib/commerce";
+import { orderWhatsAppLink } from "@/lib/whatsapp";
 import { paletteStyle, SPICES } from "@/data/spices";
 import { BodyTheme } from "@/components/site/body-theme";
 
@@ -190,7 +191,23 @@ function OrderContent() {
         </div>
       </dl>
 
-      <div className="mt-10 flex flex-wrap gap-3">
+      <div className="ws-rule mt-10 border-t border-white/10 pt-8">
+        <h2 className="font-display text-[1.05rem] font-semibold">Confirm on WhatsApp</h2>
+        <p className="ws-meta mt-2 max-w-[52ch] leading-relaxed">
+          Send your order to the shop on WhatsApp and we will confirm within a day.
+        </p>
+        <a
+          href={orderWhatsAppLink(order)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ws-btn ws-btn-accent mt-5"
+        >
+          <WhatsappLogo size={18} weight="fill" />
+          Send order on WhatsApp
+        </a>
+      </div>
+
+      <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/collection" className="ws-btn ws-btn-ghost">
           Continue shopping
         </Link>

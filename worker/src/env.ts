@@ -7,5 +7,7 @@
 export interface Env {
   DB: D1Database;
   IMAGES?: R2Bucket;
-  JWT_SECRET?: string;
+  JWT_SECRET: string;
+  ADMIN_EMAIL: string;
+  ADMIN_PASSWORD: string;
 }
