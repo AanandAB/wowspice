@@ -1,0 +1,18 @@
+// R2 (wowspice-images) is disabled until R2 is enabled on the account
+// (Cloudflare Dashboard -> R2 -> Enable; needs a card on file). Product images
+// use the `image_url` column until then. Re-enable by adding:
+//   "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "wowspice-images" }]
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wowspice-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-11-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wowspice-db",
+      "database_id": "9d4eba3e-320e-48e1-9fa0-a6b0ff1ae2b9",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

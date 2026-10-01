@@ -13,5 +13,9 @@ npm-debug.log*
 tsconfig.tsbuildinfo
 .freebuff/
 
+# wrangler local state & secrets
+.wrangler/
+.dev.vars
+
 # generated specimen posters
 /public/generated
