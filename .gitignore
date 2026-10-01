@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+build
+.DS_Store
+*.pem
+npm-debug.log*
+.env*
+!.env.example
+
+# local dev logs & build artifacts
+*.log
+tsconfig.tsbuildinfo
+.freebuff/
+
+# generated specimen posters
+/public/generated

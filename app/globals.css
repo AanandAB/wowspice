@@ -1,0 +1,447 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   wowspice design system
+   ----------------------------------------------------------------------------
+   Shape consistency lock (documented rule, applied everywhere):
+     - interactive controls  -> pill          (--radius-control)
+     - surfaces / cards      -> 16px          (--radius-surface)
+     - media / 3D stages     -> 24px          (--radius-media)
+   Colour: each spice supplies its own accent + background at runtime via
+   --ws-accent (an "R G B" triplet) and --ws-bg. Nothing in the UI hardcodes a
+   brand accent, so the entire page re-skins per spice.
+   ========================================================================== */
+
+@theme {
+  --font-sans: var(--font-satoshi), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-gambetta), ui-serif, Georgia, serif;
+
+  --color-bone: #e8e5df;
+  --color-bone-dim: #a9a49b;
+  --color-bone-faint: #79736b;
+  --color-void: #0b0908;
+
+  --radius-control: 999px;
+  --radius-surface: 16px;
+  --radius-media: 24px;
+
+  /* Strong curves. Tailwind's built-ins are too weak to read as intentional. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --duration-press: 160ms;
+  --duration-small: 200ms;
+  --duration-control: 250ms;
+  --duration-crossfade: 420ms;
+}
+
+:root {
+  /* Overridden per spice. Defaults are Black Pepper so server-rendered pages
+     have a sensible accent before any JS runs. */
+  --ws-accent: 217 114 44;
+  --ws-bg: #100d0c;
+  --ws-paper: #e8e5df;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--ws-bg);
+  color: var(--ws-paper);
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  /* Background colour changes are part of the spice transition. */
+  transition: background-color var(--duration-crossfade) var(--ease-out);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 560;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: rgb(var(--ws-accent));
+  color: #100d0c;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--ws-accent));
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Portraits of a spice-lit room: thin, low-contrast scrollbar. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.12);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 255 255 / 0.22);
+  background-clip: content-box;
+}
+
+@layer components {
+  /* ---------------------------------------------------------------- surfaces */
+
+  .ws-surface {
+    background: rgb(255 255 255 / 0.04);
+    border: 1px solid rgb(255 255 255 / 0.09);
+    border-radius: var(--radius-surface);
+  }
+
+  .ws-rule {
+    border-top: 1px solid rgb(255 255 255 / 0.09);
+  }
+
+  /* A hairline that carries the spice accent. */
+  .ws-rule-accent {
+    border-top: 1px solid rgb(var(--ws-accent) / 0.32);
+  }
+
+  /* ------------------------------------------------------------------ type */
+
+  .ws-display-xl {
+    font-family: var(--font-display);
+    font-weight: 560;
+    font-size: clamp(2.6rem, 6.6vw, 5rem);
+    line-height: 0.98;
+    letter-spacing: -0.018em;
+  }
+
+  .ws-display-lg {
+    font-family: var(--font-display);
+    font-weight: 560;
+    font-size: clamp(2.05rem, 4.4vw, 3.25rem);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+  }
+
+  .ws-display-md {
+    font-family: var(--font-display);
+    font-weight: 560;
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+    line-height: 1.08;
+  }
+
+  /* Italic descender clearance: never leading-none on italic display type. */
+  .ws-italic {
+    font-style: italic;
+    line-height: 1.12;
+    padding-bottom: 0.08em;
+  }
+
+  .ws-body {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: rgb(var(--ws-paper) / 0.78);
+    max-width: 65ch;
+  }
+
+  .ws-meta {
+    font-size: 0.78rem;
+    letter-spacing: 0.01em;
+    color: rgb(var(--ws-paper) / 0.55);
+  }
+
+  .ws-accent-text {
+    color: rgb(var(--ws-accent));
+  }
+
+  /* The spice's own name in its own language. */
+  .ws-local {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.05rem;
+    line-height: 1.12;
+    padding-bottom: 0.08em;
+    color: rgb(var(--ws-paper) / 0.66);
+  }
+
+  .ws-price {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ws-price-lg {
+    font-family: var(--font-display);
+    font-size: 2.15rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ------------------------------------------------------------- controls */
+
+  .ws-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--radius-control);
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.9rem 1.6rem;
+    white-space: nowrap; /* CTA wrap ban: primary labels fit one line */
+    transition:
+      transform var(--duration-press) var(--ease-out),
+      background-color var(--duration-small) var(--ease-out),
+      border-color var(--duration-small) var(--ease-out),
+      color var(--duration-small) var(--ease-out);
+  }
+
+  .ws-btn:active {
+    transform: scale(0.97);
+  }
+
+  .ws-btn:disabled {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .ws-btn-primary {
+    background: var(--ws-paper);
+    color: #100d0c;
+  }
+
+  .ws-btn-accent {
+    background: rgb(var(--ws-accent));
+    color: #100d0c;
+  }
+
+  .ws-btn-ghost {
+    border: 1px solid rgb(255 255 255 / 0.16);
+    color: rgb(var(--ws-paper) / 0.9);
+  }
+
+  .ws-btn-sm {
+    padding: 0.6rem 1.05rem;
+    font-size: 0.84rem;
+  }
+
+  /* Pointer-only hover. Touch devices fire hover on tap and would stick. */
+  @media (hover: hover) and (pointer: fine) {
+    .ws-btn-primary:hover {
+      background: #fff;
+    }
+    .ws-btn-accent:hover {
+      background: rgb(var(--ws-accent) / 0.86);
+    }
+    .ws-btn-ghost:hover {
+      background: rgb(255 255 255 / 0.08);
+      border-color: rgb(255 255 255 / 0.3);
+    }
+  }
+
+  .ws-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-control);
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background: rgb(255 255 255 / 0.04);
+    transition:
+      transform var(--duration-press) var(--ease-out),
+      border-color var(--duration-small) var(--ease-out),
+      background-color var(--duration-small) var(--ease-out);
+  }
+
+  .ws-icon-btn:active {
+    transform: scale(0.94);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ws-icon-btn:hover {
+      border-color: rgb(var(--ws-accent) / 0.55);
+      background: rgb(var(--ws-accent) / 0.1);
+    }
+  }
+
+  /* ---------------------------------------------------------------- fields */
+
+  .ws-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgb(var(--ws-paper) / 0.72);
+    margin-bottom: 0.5rem;
+  }
+
+  .ws-input {
+    width: 100%;
+    background: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.92rem;
+    font-family: inherit;
+    color: var(--ws-paper);
+    transition:
+      border-color var(--duration-small) var(--ease-out),
+      background-color var(--duration-small) var(--ease-out);
+  }
+
+  .ws-input::placeholder {
+    color: rgb(var(--ws-paper) / 0.38);
+  }
+
+  .ws-input:focus {
+    outline: none;
+    border-color: rgb(var(--ws-accent) / 0.7);
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .ws-input[aria-invalid="true"] {
+    border-color: rgb(232 69 42 / 0.8);
+  }
+
+  .ws-error {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 0.78rem;
+    color: #f08a72;
+  }
+
+  /* ------------------------------------------------------------- overlays */
+
+  /* Two stacked layers crossfading opacity: gradients are not GPU-composited,
+     opacity on separate layers is. */
+  .ws-bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-crossfade) var(--ease-out);
+  }
+
+  .ws-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgb(255 255 255 / 0.05);
+    border-radius: var(--radius-surface);
+  }
+
+  .ws-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--ws-accent) / 0.12),
+      transparent
+    );
+    animation: ws-shimmer 1.5s linear infinite;
+  }
+
+  /* A subtle film grain so the dark grounds read as material, not flat fill. */
+  .ws-grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.32;
+    mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+@keyframes ws-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ws-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.ws-bob {
+  animation: ws-bob 6.5s ease-in-out infinite;
+}
+
+@keyframes ws-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.45);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.ws-pop {
+  animation: ws-pop 320ms var(--ease-out);
+}
+
+@keyframes ws-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced motion means fewer and gentler, not zero: colour and opacity
+   transitions that aid comprehension stay; movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ws-bob {
+    animation: none;
+  }
+}
