@@ -11,7 +11,7 @@
     {
       "binding": "DB",
       "database_name": "wowspice-db",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID",
+      "database_id": "57867005-d18d-4387-b015-3f54931b66a2",
       "migrations_dir": "migrations"
     }
   ]

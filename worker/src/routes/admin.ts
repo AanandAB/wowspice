@@ -66,3 +66,58 @@ export async function adminOrders(env: Env, request: Request): Promise<Response>
     orders: orders.map((o) => ({ ...o, items: byOrder.get(String(o.id)) ?? [] })),
   });
 }
+
+/** Editable product fields, mapped to their D1 column names. */
+const PRODUCT_EDIT_FIELDS: [string, string][] = [
+  ["name", "name"],
+  ["sp", "sp"],
+  ["cp", "cp"],
+  ["stock_grams", "stock_grams"],
+  ["image_url", "image_url"],
+];
+
+export async function adminUpdateProduct(env: Env, request: Request, id: string): Promise<Response> {
+  const auth = await requireAdmin(request, env);
+  if (!auth.ok) return auth.response;
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+
+  const updates: string[] = [];
+  const values: unknown[] = [];
+
+  for (const [key, col] of PRODUCT_EDIT_FIELDS) {
+    if (!(key in body)) continue;
+    const v = body[key];
+    if (key === "sp" || key === "cp" || key === "stock_grams") {
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) return json({ error: `invalid_${key}` }, 400);
+      updates.push(`${col} = ?`);
+      values.push(n);
+    } else if (key === "image_url") {
+      if (v !== null && typeof v !== "string") return json({ error: "invalid_image_url" }, 400);
+      updates.push(`${col} = ?`);
+      values.push(v);
+    } else {
+      if (typeof v !== "string" || !v.trim()) return json({ error: "invalid_name" }, 400);
+      updates.push(`${col} = ?`);
+      values.push(v.trim());
+    }
+  }
+
+  if (updates.length === 0) return json({ error: "no_fields" }, 400);
+
+  updates.push("updated_at = ?");
+  values.push(Math.floor(Date.now() / 1000), id);
+
+  const result = await env.DB.prepare(`UPDATE products SET ${updates.join(", ")} WHERE id = ?`)
+    .bind(...values)
+    .run();
+  if (!result.meta.changes) return json({ error: "product_not_found" }, 404);
+
+  return json({ ok: true });
+}
