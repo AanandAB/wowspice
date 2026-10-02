@@ -4,6 +4,7 @@ import { listProducts } from "./routes/products";
 import { createOrder, getOrder } from "./routes/orders";
 import { adminLogin, adminOrders, adminUpdateProduct } from "./routes/admin";
 import { adminPricing, createExpense, deleteExpense, listExpenses } from "./routes/pricing";
+import { adminReports } from "./routes/reports";
 
 /**
  * wowspice-api — backend for the wowspice storefront + admin CMS.
@@ -47,6 +48,9 @@ export default {
       }
       if (url.pathname === "/api/admin/pricing" && method === "GET") {
         return await adminPricing(env, request);
+      }
+      if (url.pathname === "/api/admin/reports" && method === "GET") {
+        return await adminReports(env, request);
       }
       if (url.pathname === "/api/admin/expenses" && method === "GET") {
         return await listExpenses(env, request);

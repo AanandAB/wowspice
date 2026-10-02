@@ -83,6 +83,9 @@ export default function AdminOrdersPage() {
             <Link href="/admin/products" className="ws-btn ws-btn-ghost ws-btn-sm">
               Products
             </Link>
+            <Link href="/admin/reports" className="ws-btn ws-btn-ghost ws-btn-sm">
+              Reports
+            </Link>
             <button onClick={signOut} className="ws-btn ws-btn-ghost ws-btn-sm">
               <SignOut size={14} weight="bold" /> Sign out
             </button>
