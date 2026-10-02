@@ -10,6 +10,7 @@ import { formatINR, unitPrice } from "@/lib/commerce";
 import { useCartStore } from "@/store/cart";
 import { SpiceImage } from "@/components/spice/spice-image";
 import { spiceImage } from "@/data/photography";
+import { useResolvedSpice } from "@/lib/catalog";
 
 /** Ignore a tap that was really the tail of a horizontal drag. */
 const DRAG_CLICK_THRESHOLD = 8;
@@ -42,6 +43,7 @@ interface NavState {
 export function SpiceCarousel() {
   const [nav, setNav] = useState<NavState>({ index: 0, direction: 1, count: 0 });
   const spice = SPICES[nav.index];
+  const resolvedSpice = useResolvedSpice(spice);
   const layer = nav.count % 2;
   const router = useRouter();
   const recordView = useCartStore((state) => state.recordView);
@@ -123,9 +125,9 @@ export function SpiceCarousel() {
     () =>
       [PACKS[1], PACKS[3]].map((pack) => ({
         label: pack.label,
-        price: unitPrice(spice, pack, WHOLE),
+        price: unitPrice(resolvedSpice, pack, WHOLE),
       })),
-    [spice]
+    [resolvedSpice]
   );
 
   const openDetail = useCallback(() => {
@@ -291,7 +293,7 @@ export function SpiceCarousel() {
               <p className="ws-body mt-4 text-center text-[0.98rem]">{spice.tagline}</p>
 
               <div className="mt-6 flex items-baseline gap-3">
-                <span className="ws-price">{formatINR(spice.basePrice)}</span>
+                <span className="ws-price">{formatINR(resolvedSpice.basePrice)}</span>
                 <span className="ws-meta">per 100 g</span>
               </div>
               <p className="ws-meta mt-2 tabular-nums">

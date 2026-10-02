@@ -1,4 +1,7 @@
+"use client";
+
 import { spiceImage } from "@/data/photography";
+import { useCatalog } from "@/lib/catalog";
 
 /**
  * The shared product-image primitive.
@@ -31,7 +34,8 @@ export function SpiceImage({
   priority = false,
   fit = "cover",
 }: SpiceImageProps) {
-  const src = spiceImage(slug);
+  const catalog = useCatalog();
+  const src = catalog.get(slug)?.image_url ?? spiceImage(slug);
 
   if (src) {
     return (

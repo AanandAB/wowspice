@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { getSpiceById } from "@/data/spices";
 import { formatINR } from "@/lib/commerce";
 import { SpiceImage } from "./spice-image";
+import { useCatalog } from "@/lib/catalog";
 import type { SpecimenId } from "@/lib/three/recipes";
 
 /**
@@ -31,6 +32,8 @@ export function SpiceGrid({
   linked = true,
   className = "",
 }: SpiceGridProps) {
+  const catalog = useCatalog();
+
   return (
     <div
       className={`grid grid-cols-2 gap-x-3 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 ${className}`}
@@ -60,7 +63,7 @@ export function SpiceGrid({
             <p className="text-[0.9rem] font-semibold">{spice.name}</p>
             <p className="ws-meta mt-0.5 truncate">{spice.local.roman}</p>
             <p className="ws-meta mt-1.5 tabular-nums">
-              {formatINR(spice.basePrice)}
+              {formatINR(catalog.get(spice.slug)?.sp ?? spice.basePrice)}
               <span className="opacity-60"> / 100 g</span>
             </p>
           </div>

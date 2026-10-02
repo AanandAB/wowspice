@@ -6,6 +6,7 @@ import { Check, ShoppingBag } from "@phosphor-icons/react";
 import { GRINDS, PACKS, type GrindOption, type Spice } from "@/data/spices";
 import { formatGrams, formatINR, makeLine, pricePer100g, unitPrice } from "@/lib/commerce";
 import { useCartStore } from "@/store/cart";
+import { useResolvedSpice } from "@/lib/catalog";
 
 /**
  * Purchase controls.
@@ -15,6 +16,7 @@ import { useCartStore } from "@/store/cart";
  */
 export function BuyPanel({ spice }: { spice: Spice }) {
   const addLine = useCartStore((state) => state.addLine);
+  const resolved = useResolvedSpice(spice);
 
   const [packIndex, setPackIndex] = useState(1); // 250 g default
   const [grind, setGrind] = useState<GrindOption>(GRINDS[0]);
@@ -25,19 +27,19 @@ export function BuyPanel({ spice }: { spice: Spice }) {
 
   const { price, per100, lineTotal } = useMemo(
     () => ({
-      price: unitPrice(spice, pack, grind),
-      per100: pricePer100g(spice, pack, grind),
-      lineTotal: unitPrice(spice, pack, grind) * quantity,
+      price: unitPrice(resolved, pack, grind),
+      per100: pricePer100g(resolved, pack, grind),
+      lineTotal: unitPrice(resolved, pack, grind) * quantity,
     }),
-    [spice, pack, grind, quantity]
+    [resolved, pack, grind, quantity]
   );
 
   const basePack = PACKS[0];
-  const basePer100 = pricePer100g(spice, basePack, grind);
+  const basePer100 = pricePer100g(resolved, basePack, grind);
   const saving = Math.round((1 - per100 / basePer100) * 100);
 
   const onAdd = () => {
-    addLine(makeLine(spice, pack, grind, quantity));
+    addLine(makeLine(resolved, pack, grind, quantity));
     toast.success(`Added ${quantity} × ${spice.name} · ${pack.label}`, {
       description: `${grind.label} · ${formatINR(lineTotal)}`,
     });

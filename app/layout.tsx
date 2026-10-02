@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { MotionConfig } from "motion/react";
+import { CatalogProvider } from "@/lib/catalog";
 import { gambetta, satoshi } from "./fonts/fonts";
 import "./globals.css";
 import { SiteHeader } from "@/components/site/site-header";
@@ -40,7 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* `reducedMotion="user"` auto-disables transform animations for
             prefers-reduced-motion users while keeping opacity/colour. */}
         <MotionConfig reducedMotion="user">
-          <a
+          <CatalogProvider>
+            <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[300] focus:rounded-full focus:bg-[var(--ws-paper)] focus:px-4 focus:py-2 focus:text-[#100d0c]"
           >
@@ -51,7 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteFooter />
           <CartDrawer />
           <CommandPalette />
-          <Toaster />
+            <Toaster />
+          </CatalogProvider>
         </MotionConfig>
       </body>
     </html>
