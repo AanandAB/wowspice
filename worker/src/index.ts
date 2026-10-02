@@ -3,6 +3,7 @@ import { corsHeaders, error, json } from "./lib/http";
 import { listProducts } from "./routes/products";
 import { createOrder, getOrder } from "./routes/orders";
 import { adminLogin, adminOrders, adminUpdateProduct } from "./routes/admin";
+import { adminPricing, createExpense, deleteExpense, listExpenses } from "./routes/pricing";
 
 /**
  * wowspice-api — backend for the wowspice storefront + admin CMS.
@@ -43,6 +44,19 @@ export default {
       const productMatch = url.pathname.match(/^\/api\/admin\/products\/([^/]+)$/);
       if (productMatch && method === "PATCH") {
         return await adminUpdateProduct(env, request, decodeURIComponent(productMatch[1]));
+      }
+      if (url.pathname === "/api/admin/pricing" && method === "GET") {
+        return await adminPricing(env, request);
+      }
+      if (url.pathname === "/api/admin/expenses" && method === "GET") {
+        return await listExpenses(env, request);
+      }
+      if (url.pathname === "/api/admin/expenses" && method === "POST") {
+        return await createExpense(env, request);
+      }
+      const expenseMatch = url.pathname.match(/^\/api\/admin\/expenses\/([^/]+)$/);
+      if (expenseMatch && method === "DELETE") {
+        return await deleteExpense(env, request, decodeURIComponent(expenseMatch[1]));
       }
       return error("not_found", 404);
     } catch (err) {
